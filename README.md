@@ -1,22 +1,31 @@
 # Cisco Spark command line interface
 
-This is a Cisco Spark command line interface. It is dependent on the [node-ciscospark](https://www.npmjs.com/package/node-ciscospark) module, therefore it supports all the APIs and methods offered by that module.
+[![NPM](https://nodei.co/npm/ciscospark-cli.png)](https://nodei.co/npm/ciscospark-cli/)
+
+[![npm](https://img.shields.io/npm/v/ciscospark-cli.svg)](https://www.npmjs.com/package/ciscospark-cli) [![dependencies Status](https://david-dm.org/joelee/spark-cli/status.svg)](https://david-dm.org/joelee/spark-cli) [![GitHub issues](https://img.shields.io/github/issues/joelee/spark-cli.svg)](https://github.com/joelee/ciscospark/issues) 
+
+This is a Cisco Spark command line interface which allows you to access [Cisco Spark API](https://developer.ciscospark.com/quick-reference.html) from your Shell Terminal. 
+
+This tool is dependent on the [node-ciscospark](https://www.npmjs.com/package/node-ciscospark) module, therefore it supports all the [APIs and methods]((https://github.com/joelee/ciscospark/blob/master/README.md)) offered by that module.
 
 ## Prerequisites
 
 - Node.js >= 4.0.0
 - NPM
+- *nix Shell environment (e.g. Bash)
 
 ## Installation
 
 ```bash
-$ sudo npm install --global spark-cli
+$ sudo npm install --global ciscospark-cli
 $ spark --version
 ```
 
 ## Usage
 
 ## Setting up your Access Token
+
+Before you are able to use this CLI tool, you will need an account in Spark and an Access Token. See [Getting Started](https://developer.ciscospark.com/getting-started.html)
 
 ```bash
 $ export CISCOSPARK_ACCESS_TOKEN="***YourSparkAccessToken***"
@@ -31,7 +40,7 @@ $ spark -m create -p "roomId:831cb6a0-2c28-21e7-a283-f18478d5ab59" -p "text:Hell
 ### Send a Message to a Person
 
 ```bash
-$ spark -m create -p "personEmail:john.doe@example.com" -p "text:Hello John"
+$ spark -m create -p "toPersonEmail:john.doe@example.com" -p "markdown:Hello **John**"
 ```
 
 ### Get Command Help

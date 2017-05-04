@@ -1,6 +1,6 @@
 {
-  "name": "spark-cli",
-  "version": "0.9.0",
+  "name": "ciscospark-cli",
+  "version": "0.9.1",
   "description": "Cisco Spark command line interface",
   "homepage": "https://github.com/joelee/spark-cli",
   "main": "src/index.js",
