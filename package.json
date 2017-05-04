@@ -1,0 +1,40 @@
+{
+  "name": "spark-cli",
+  "version": "0.9.0",
+  "description": "Cisco Spark command line interface",
+  "homepage": "https://github.com/joelee/spark-cli",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:joelee/spark-cli.git"
+  },
+  "keywords": [
+    "ciscospark",
+    "spark",
+    "cisco",
+    "cli"
+  ],
+  "bin": {
+    "spark": "./bin/spark"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "author": "Joseph Lee <joselee2@cisco.com> (https://uk.linkedin.com/in/joeworks)",
+  "license": "MIT",
+  "files": [
+    "src",
+    "bin"
+  ],
+  "bugs": {
+    "url": "https://github.com/joelee/spark-cli/issues"
+  },
+  "dependencies": {
+    "command-line-args": "^4.0.4",
+    "command-line-usage": "^4.0.0",
+    "node-ciscospark": "^0.9.7"
+  }
+}

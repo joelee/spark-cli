@@ -1,0 +1,76 @@
+#! /usr/bin/env node
+'use strict'
+
+/**
+bin/spark -t N2Q0OTUyNGUtYTgzOC00MWY0LTk1NjgtY2Q4MTVhZTExMWRkMmViMDY0MzgtMDdi -m create \
+  -p roomId:804cb6a0-2c26-11e7-a284-f18478d5eb59 markdown:testing-123
+*/
+
+const commandLineArgs = require('command-line-args')
+const getUsage = require('command-line-usage')
+const Spark = require('../src')
+
+const optionDefinitions = [
+  { name: 'help', alias: 'h', type: Boolean, description: 'Show help (This screen)' },
+  { name: 'api', alias: 'a', type: String, defaultValue: 'messages', description: 'API Request type. (Default: messages)', typeLabel: '[underline]{objectType}' },
+  { name: 'method', alias: 'm', type: String, description: 'Method Name (Default: list)', defaultOption: true, typeLabel: '[underline]{actionName}' },
+  { name: 'params', alias: 'p', type: String, multiple: true, description: 'Field parameters', typeLabel: '[underline]{key1}:[underline]{value1} ...' },
+  { name: 'json', alias: 'j', type: String, description: 'Field parameters as JSON string', typeLabel: '[underline]{jsonString}' }, // @todo pipe
+  { name: 'token', alias: 't', type: String, description: 'Spark Access Token ()', typeLabel: '[underline]{accessToken}' },
+  { name: 'version', alias: 'V', type: Boolean, description: 'Show version number' },
+  { name: 'verbose', alias: 'v', type: Boolean, description: 'Verbose Output' }
+]
+
+const args = commandLineArgs(optionDefinitions)
+const opts = {
+  api: args.api || 'messages',
+  method: args.method || 'list',
+  payload: null,
+  token: args.token || process.env.CISCOSPARK_ACCESS_TOKEN,
+  verbose: args.verbose
+}
+
+if (args.help) {
+  help()
+  process.exit(0)
+}
+
+if (args.version) {
+  const app = require('../package.json')
+  console.log(app.name, 'v' + app.version)
+  process.exit(0)
+}
+
+if (args.json) {
+  opts.payload = JSON.parse(args.json)
+} else if (args.params && Array.isArray(args.params)) {
+  opts.payload = paramParse(args.params)
+}
+
+Spark(opts)
+
+function help () {
+  const sections = [
+    {
+      header: 'Cisco Spark API command line tool',
+      content: 'Command line wrapper for Cisco Spark API'
+    },
+    {
+      header: 'Options',
+      optionList: optionDefinitions
+    }
+  ]
+  const usage = getUsage(sections)
+  // messages|people|teams|rooms|memberships|teamMemberships|webhooks
+  console.log(usage)
+}
+
+function paramParse (params) {
+  let results = {}
+  for (let i = 0; i < params.length; ++i) {
+    const param = params[i]
+    const p = param.indexOf(':')
+    results[param.substr(0, p)] = param.substr(p + 1)
+  }
+  return results
+}
