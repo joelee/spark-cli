@@ -1,11 +1,6 @@
 #! /usr/bin/env node
 'use strict'
 
-/**
-bin/spark -t N2Q0OTUyNGUtYTgzOC00MWY0LTk1NjgtY2Q4MTVhZTExMWRkMmViMDY0MzgtMDdi -m create \
-  -p roomId:804cb6a0-2c26-11e7-a284-f18478d5eb59 markdown:testing-123
-*/
-
 const commandLineArgs = require('command-line-args')
 const getUsage = require('command-line-usage')
 const Spark = require('../src')
