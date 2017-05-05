@@ -6,23 +6,27 @@ const getUsage = require('command-line-usage')
 const Spark = require('../src')
 
 const optionDefinitions = [
+  { name: 'beautify', alias: 'b', type: Boolean, description: 'Beautify JSON response - made human readable' },
   { name: 'help', alias: 'h', type: Boolean, description: 'Show help (This screen)' },
-  { name: 'api', alias: 'a', type: String, defaultValue: 'messages', description: 'API Request type. (Default: messages)', typeLabel: '[underline]{objectType}' },
-  { name: 'method', alias: 'm', type: String, description: 'Method Name (Default: list)', defaultOption: true, typeLabel: '[underline]{actionName}' },
-  { name: 'params', alias: 'p', type: String, multiple: true, description: 'Field parameters', typeLabel: '[underline]{key1}:[underline]{value1} ...' },
-  { name: 'json', alias: 'j', type: String, description: 'Field parameters as JSON string', typeLabel: '[underline]{jsonString}' }, // @todo pipe
-  { name: 'token', alias: 't', type: String, description: 'Spark Access Token ()', typeLabel: '[underline]{accessToken}' },
-  { name: 'version', alias: 'V', type: Boolean, description: 'Show version number' },
-  { name: 'verbose', alias: 'v', type: Boolean, description: 'Verbose Output' }
+  { name: 'json', alias: 'j', type: String, description: 'Field parameters as JSON string', typeLabel: '[underline]{jsonString}' },
+  { name: 'outfile', alias: 'f', type: String, description: 'JSON response output to file', typeLabel: '[underline]{fileName}' },
+  { name: 'quiet', alias: 'q', type: Boolean, description: 'Suppress Response Output to Console. Does not suppress error output.' },
+  { name: 'token', alias: 't', type: String, description: 'Spark Access Token', typeLabel: '[underline]{accessToken}' },
+  { name: 'version', alias: 'v', type: Boolean, description: 'Show version number' }
 ]
 
-const args = commandLineArgs(optionDefinitions)
+const args = commandLineArgs(optionDefinitions, { partial: true })
+const validMethods = [ 'messages', 'people', 'teams', 'rooms', 'memberships', 'teamMemberships', 'webhooks' ]
+const validCommands = [ 'list', 'create', 'get', 'update', 'delete' ]
 const opts = {
-  api: args.api || 'messages',
-  method: args.method || 'list',
-  payload: null,
+  method: null,
+  command: null,
+  params: null,
   token: args.token || process.env.CISCOSPARK_ACCESS_TOKEN,
-  verbose: args.verbose
+  quiet: args.quiet,
+  outfile: args.outfile,
+  beautify: args.beautify,
+  pipe: false
 }
 
 if (args.help) {
@@ -37,12 +41,40 @@ if (args.version) {
 }
 
 if (args.json) {
-  opts.payload = JSON.parse(args.json)
-} else if (args.params && Array.isArray(args.params)) {
-  opts.payload = paramParse(args.params)
+  opts.params = JSON.parse(args.json)
 }
 
-Spark(opts)
+if (args && args._unknown) {
+  for (let i = 0; i < args._unknown.length; ++i) {
+    const arg = args._unknown[i]
+    const match = arg.match(/^--([A-Za-z0-9]+)=(.+)$/)
+    if (match) {
+      if (!opts.params) opts.params = {}
+      opts.params[match[1]] = match[2]
+    } else if (validMethods.indexOf(arg) >= 0) {
+      opts.method = arg
+    } else if (validCommands.indexOf(arg) >= 0) {
+      opts.command = arg
+    } else if (arg === '--') {
+      opts.pipe = true
+    }
+  }
+}
+
+if (!opts.method) opts.method = validMethods[0]
+if (!opts.command) {
+  console.error('Invalid command. For help and usage: \n\n    spark --help\n')
+  process.exit(11)
+}
+
+if (opts.verbose) console.log('Using options:', opts)
+
+try {
+  Spark(opts)
+} catch (e) {
+  console.error('Exception caught:', e)
+  process.exit(99)
+}
 
 function help () {
   const sections = [
@@ -51,21 +83,85 @@ function help () {
       content: 'Command line wrapper for Cisco Spark API'
     },
     {
+      header: 'Synopsis',
+      content: '$ [cyan]{spark [underline]{Method}} [cyan]{[underline]{Command}} [cyan]{[options] [params]}'
+    },
+    {
+      header: 'Method List',
+      content: [
+        { name: 'messages', summary: '(Default)' },
+        { name: 'people' },
+        { name: 'teams' },
+        { name: 'rooms' },
+        { name: 'memberships' },
+        { name: 'teamMemberships' },
+        { name: 'webhooks' }
+      ]
+    },
+    {
+      header: 'Command List (Required)',
+      content: [
+        { name: 'list', summary: 'List all targets' },
+        { name: 'create', summary: 'Create a new target' },
+        { name: 'get', summary: 'Get a target details' },
+        { name: 'update', summary: 'Update a target details' },
+        { name: 'delete', summary: 'Delete a target' }
+      ]
+    },
+    {
       header: 'Options',
       optionList: optionDefinitions
+    },
+    {
+      header: 'Params',
+      content: [
+        '  Query or Request parameters applicable for the [underline]{Method} and [underline]{Command} in the format of:',
+        '  ',
+        '       [cyan]{--name=value}',
+        '  ',
+        '  Example:',
+        '  ',
+        '       [cyan]{--roomId=804cb6a0-2c26-11e7-a284-f18478d5eb59 --text="Hello World"}',
+        '  ',
+        '  For valid parameters, see the [underline]{Method} documentation at: https://developer.ciscospark.com/quick-reference.html'
+      ],
+      raw: true
+    },
+    {
+      header: 'Usage Examples',
+      content: [
+        '  Send a text message to a Room',
+        '  ',
+        '       [cyan]{spark message create --roomId=804cb6a0-2c26-11e7-a284-f18478d5eb59 --text="Hello World"}',
+        '  ',
+        '  Send a markdown message to a Person',
+        '  ',
+        '       [cyan]{spark message create --toPersonEmail=john.doe@cisco.com --markdown="Hello **John**"}',
+        '  ',
+        '  Create a new chat room',
+        '  ',
+        '       [cyan]{spark rooms create -b --title="My new Chatroom"}',
+        '  ',
+        '  List all the rooms you belongs to',
+        '  ',
+        '       [cyan]{spark rooms list -b}',
+        '  ',
+        '  Get a room detail',
+        '  ',
+        '       [cyan]{spark rooms get -b --id=Y2lzY29zcGFyazovL3VzL1JPT00vY2Q5YmVkODAtMzFkNi0xMWU3LTlhMTEtZTUzOTFlOTI4MjAx}',
+        '  ',
+        '  Update a room detail',
+        '  ',
+        '       [cyan]{spark rooms update -b --id=Y2lzY29zcGFyazovL3VzL1JPT00vY2Q5YmVkODAtMzFkNi0xMWU3LTlhMTEtZTUzOTFlOTI4MjAx --title="Name Changed"}',
+        '  ',
+        '  Delete a room',
+        '  ',
+        '       [cyan]{spark rooms delete --id=Y2lzY29zcGFyazovL3VzL1JPT00vY2Q5YmVkODAtMzFkNi0xMWU3LTlhMTEtZTUzOTFlOTI4MjAx}',
+        '  '
+      ],
+      raw: true
     }
   ]
   const usage = getUsage(sections)
-  // messages|people|teams|rooms|memberships|teamMemberships|webhooks
   console.log(usage)
-}
-
-function paramParse (params) {
-  let results = {}
-  for (let i = 0; i < params.length; ++i) {
-    const param = params[i]
-    const p = param.indexOf(':')
-    results[param.substr(0, p)] = param.substr(p + 1)
-  }
-  return results
 }
