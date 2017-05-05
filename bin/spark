@@ -84,7 +84,7 @@ function help () {
     },
     {
       header: 'Synopsis',
-      content: '$ [cyan]{spark [underline]{Method}} [cyan]{[underline]{Command}} [cyan]{[options] [params]}'
+      content: '$ [cyan]{spark [underline]{[Method]}} [cyan]{[underline]{Command}} [cyan]{[options] [params]}'
     },
     {
       header: 'Method List',

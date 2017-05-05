@@ -40,7 +40,7 @@ spark create --roomId=831cb6a0-2c28-21e7-a283-f18478d5ab59 --text="Hello World"
 ### Send a Markdown Message to a Person
 
 ```bash
-spark -m create --toPersonEmail:"john.doe@example.com" --markdown:"Hello **John**"
+spark create --toPersonEmail:"john.doe@example.com" --markdown:"Hello **John**"
 ```
 
 ### Create a new chat room
